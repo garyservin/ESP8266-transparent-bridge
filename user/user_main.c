@@ -73,7 +73,7 @@ void user_init(void)
 		UartDev.data_bits = GETUART_DATABITS(flash_param->uartconf0);
 		UartDev.parity = GETUART_PARITYMODE(flash_param->uartconf0);
 		UartDev.stop_bits = GETUART_STOPBITS(flash_param->uartconf0);
-		uart_init(flash_param->baud, BIT_RATE_115200);
+		uart_init(BIT_RATE_115200, BIT_RATE_115200);
 	#else
 		UartDev.data_bits = EIGHT_BITS;
 		UartDev.parity = NONE_BITS;
@@ -91,7 +91,7 @@ void user_init(void)
 	#ifdef CONFIG_DYNAMIC
 		serverInit(flash_param->port);
 	#else
-		serverInit(23);
+		serverInit(1234);
 	#endif
 
 	#ifdef CONFIG_GPIO

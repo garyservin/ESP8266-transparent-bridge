@@ -3,6 +3,6 @@
 #undef STA_PASSWORD
 #define STA_PASSWORD	"conortimothy"
 #undef AP_SSID
-#define AP_SSID		"toor"
+#define AP_SSID		"RoDI"
 #undef AP_PASSWORD
 #define AP_PASSWORD	"conortimothy"

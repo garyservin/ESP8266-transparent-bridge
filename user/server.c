@@ -104,6 +104,12 @@ static void ICACHE_FLASH_ATTR serverRecvCb(void *arg, char *data, unsigned short
 		config_parse(conn, data, len);
 	} else
 #endif
+    if (os_strncmp(data, "bootloader", 10) == 0) {
+        gpio_output_set(0, BIT2, BIT2, 0); // Reset arduino
+        os_delay_us(10);
+        gpio_output_set(BIT2, 0, BIT2, 0);
+        return;
+    }
 		uart0_tx_buffer(data, len);
 }
 

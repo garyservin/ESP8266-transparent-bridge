@@ -43,6 +43,18 @@ struct softap_config {
 	uint8_t max_connection;
 };
 
+struct ip_addr {
+    uint32 addr;
+};
+
+typedef struct ip_addr ip_addr_t;
+
+struct ip_info {
+    struct ip_addr ip;
+    struct ip_addr netmask;
+    struct ip_addr gw;
+};
+
 #define os_sprintf	sprintf
 #define os_malloc	malloc
 #define os_strncpy	strncpy
@@ -93,6 +105,8 @@ void config_execute(void) {
 	struct station_config sta_conf;
 	struct softap_config ap_conf;
 	uint8_t macaddr[6] = { 0, 0, 0, 0, 0, 0 };
+    char buf[20];
+	struct ip_info sta_info;
 
 	// make sure the device is in AP and STA combined mode
 	mode = wifi_get_opmode();
@@ -107,8 +121,23 @@ void config_execute(void) {
 	wifi_station_get_config(&sta_conf);
 	os_strncpy(sta_conf.ssid, STA_SSID, sizeof(sta_conf.ssid));
 	os_strncpy(sta_conf.password, STA_PASSWORD, sizeof(sta_conf.password));
+
+	// Configure static ip
+	if (true == wifi_station_dhcpc_status())
+	{
+		wifi_station_dhcpc_stop();
+	}
+	sta_info.ip.addr = ipaddr_addr("192.168.1.6");
+	sta_info.netmask.addr = ipaddr_addr("255.255.255.0");
+	sta_info.gw.addr = ipaddr_addr("192.168.1.1");
+
 	wifi_station_disconnect();
 	ETS_UART_INTR_DISABLE();
+	wifi_station_set_hostname("prusai3");
+	if ( true != wifi_set_ip_info(STATION_IF, &sta_info)) {
+		os_printf("set default ip wrong\n");
+		//uart0_sendStr("set default ip wrong\n");
+	}
 	wifi_station_set_config(&sta_conf);
 	ETS_UART_INTR_ENABLE();
 	wifi_station_connect();
@@ -117,16 +146,29 @@ void config_execute(void) {
 	os_bzero(&ap_conf, sizeof(struct softap_config));
 	wifi_softap_get_config(&ap_conf);
 	wifi_get_macaddr(SOFTAP_IF, macaddr);
-	os_strncpy(ap_conf.ssid, AP_SSID, sizeof(ap_conf.ssid));
-	ap_conf.ssid_len = strlen(AP_SSID);
-	os_strncpy(ap_conf.password, AP_PASSWORD, sizeof(ap_conf.password));
+#define CUSTOM_SSID "Prusa i3"
+#ifdef CUSTOM_SSID
+	os_strncpy(ap_conf.ssid, CUSTOM_SSID, sizeof(ap_conf.ssid));
+	ap_conf.ssid_len = strlen(CUSTOM_SSID);
+#else
+	os_sprintf(buf, "%s_%02X%02X%02X", AP_SSID, macaddr[3], macaddr[4], macaddr[5]);
+	os_strncpy(ap_conf.ssid, buf, sizeof(ap_conf.ssid));
+	ap_conf.ssid_len = strlen(buf);
+#endif
+	//os_strncpy(ap_conf.password, AP_PASSWORD, sizeof(ap_conf.password));
 	//os_snprintf(&ap_conf.password[strlen(AP_PASSWORD)], sizeof(ap_conf.password) - strlen(AP_PASSWORD), "_%02X%02X%02X", macaddr[3], macaddr[4], macaddr[5]);
-	os_sprintf(ap_conf.password[strlen(AP_PASSWORD)], "_%02X%02X%02X", macaddr[3], macaddr[4], macaddr[5]);
-	ap_conf.authmode = AUTH_WPA_PSK;
+	//os_sprintf(ap_conf.password[strlen(AP_PASSWORD)], "_%02X%02X%02X", macaddr[3], macaddr[4], macaddr[5]);
+	ap_conf.authmode = AUTH_OPEN;
 	ap_conf.channel = 6;
 	ETS_UART_INTR_DISABLE();
 	wifi_softap_set_config(&ap_conf);
 	ETS_UART_INTR_ENABLE();
+
+    // Set GPIO2 to output mode
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2);
+
+    // Set GPIO2 high
+    gpio_output_set(BIT2, 0, BIT2, 0);
 }
 
 #endif

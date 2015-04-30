@@ -1,7 +1,7 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-//#define CONFIG_STATIC
+#define CONFIG_STATIC
 #ifdef CONFIG_STATIC
 
 #define STA_SSID	"ssid2join"
